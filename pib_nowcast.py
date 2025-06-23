@@ -220,6 +220,10 @@ nowcast = nowcast.resample('QE').last().round(1)
 st.title('Nowcast do PIB Real')
 st.write('Este aplicativo apresenta o nowcast do PIB Real brasileiro, calculado com base em um modelo de fatores dinâmicos mensais (DFMQ).')
 
+st.sidebar.header('Ajustes do Gráfico')
+
+# st.sidebar.slider
+
 st.plotly_chart(px.line(
     nowcast,
     x=nowcast.index,
