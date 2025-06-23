@@ -1,0 +1,8 @@
+name: run pib_nowcast.py
+
+
+on:
+    schedule:
+        - cron: '00 9,10,12,18 * * 1-5'
+
+        
