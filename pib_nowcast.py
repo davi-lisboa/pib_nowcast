@@ -218,18 +218,11 @@ def create_model(endog, k_endog_monthly, factors, factor_orders, idiosyncratic_a
         idiosyncratic_ar1=idiosyncratic_ar1  # AR(1) para os termos idiossincráticos
     ).fit()
     return dfmq
+
 # Cria o modelo com as especificações
 # Aqui, k_endog_monthly é o número de séries mensais, fatores é o número de fatores, 
 # factor_orders é a ordem dos fatores, e 
 # idiosyncratic_ar1 indica se os termos idiossincráticos seguem um modelo AR(1).  
-# dfmq = DynamicFactorMQ(
-#                         endog=df_completo,
-#                         k_endog_monthly= 27,
-#                         factors=4,
-#                         factor_orders=3,
-#                         idiosyncratic_ar1=True
-#                     ).fit()
-
 dfmq = create_model(
                     endog=df_completo,
                     k_endog_monthly= 27,
