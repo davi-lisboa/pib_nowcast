@@ -40,7 +40,7 @@ from datetime import timedelta
 from bcb import sgs
 import sidrapy as sidra
 
-import statsmodels.api as sm
+# import statsmodels.api as sm
 from statsmodels.tsa.statespace.dynamic_factor_mq import DynamicFactorMQ
 
 import matplotlib.pyplot as plt
