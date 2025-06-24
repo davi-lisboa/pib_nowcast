@@ -4,7 +4,7 @@ import streamlit as st
 
 # Define o pacote e a versão
 pacote = "scipy"
-versao = "<=1.15.3" # Exemplo: uma versão específica
+versao = "<=1.15.0" # Exemplo: uma versão específica
 
 # Comando para instalar o pacote
 comando_instalacao = [sys.executable, "-m", "pip", "install", f"{pacote}{versao}"]
