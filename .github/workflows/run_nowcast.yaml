@@ -16,7 +16,9 @@ jobs:
               uses: actions/setup-python@v4
 
             - name: Install dependencies
-              run: python -m pip install pip install -r requirements.txt
+              run: |
+                python -m pip install --upgrade pip
+                pip install -r requirements.txt
 
             - name: Run pib_nowcast.py
               run: python pib_nowcast.py
