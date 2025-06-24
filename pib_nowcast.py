@@ -1,8 +1,16 @@
+import subprocess
+import sys
 import streamlit as st
 
-@st.cache_data
-def backport_scipy():
-  !pip install scipy<=1.15.3
+# Define o pacote e a versão
+pacote = "scipy"
+versao = "<=1.15.3" # Exemplo: uma versão específica
+
+# Comando para instalar o pacote
+comando_instalacao = [sys.executable, "-m", "pip", "install", f"{pacote}{versao}"]
+
+resultado = subprocess.run(comando_instalacao, capture_output=True, text=True, check=True)
+
 
 # %% Bibliotecas
 import pandas as pd
