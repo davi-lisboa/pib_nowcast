@@ -220,7 +220,10 @@ nowcast = nowcast.assign(
 nowcast = nowcast.resample('QE').last().round(1)
 # nowcast_confint = nowcast_obj.conf_int().loc[:, ['lower pib', 'upper pib']]
 
-df_graficos = pib.merge(nowcast, how='outer', left_index=True, right_index=True).loc[cutoff:]
+df_graficos = pib.merge(nowcast, 
+                        how='outer', 
+                        left_index=True, 
+                        right_index=True).loc[cutoff:].round(1)
 
 # %% Criação dash streamlit
 
@@ -228,49 +231,6 @@ st.title('Nowcast do PIB Real')
 st.write('Este aplicativo apresenta o nowcast do PIB Real brasileiro, calculado com base em um modelo de fatores dinâmicos mensais (DFMQ).')
 
 st.sidebar.header('Ajustes do Gráfico')
-
-# st.sidebar.slider
-
-st.plotly_chart(px.line(
-    nowcast,
-    x=nowcast.index,
-    y='pib_nowcast',
-    title='Nowcast do PIB Real',
-    labels={'pib_nowcast': 'YoY%', 'index':''},
-    # name='Nowcast PIB',
-    # range_y=[-10, 10]
-).update_traces(
-    mode='lines+markers',
-    line=dict(color='orange', width=2),
-    marker=dict(size=5)
-).add_scatter(
-    x=nowcast.index,
-    y=nowcast['lower_pib'],
-    mode='lines',
-    line=dict(color='lightgray', width=1, dash='dash'),
-    # name='Limite Inferior',
-    # name='',
-    # fill='tonexty',
-    # fillcolor='rgba(211, 211, 211, 0.5)'  # Cor cinza claro com transparência
-).add_scatter(
-    x=nowcast.index,
-    y=nowcast['upper_pib'],
-    mode='lines',
-    line=dict(color='lightgray', width=1, dash='dash'),
-    # name='Limite Superior',
-    name='Intervalo de Confiança',
-    fill='tonexty',
-    fillcolor='rgba(211, 211, 211, 0.5)'  # Cor cinza claro com transparência
-   
-).add_scatter(
-    x=pib.index,
-    y=pib['pib'].round(1),
-    mode='lines+markers',
-    line=dict(color='lightblue', width=1),
-    marker=dict(size=5),
-    name='PIB YoY%',
-)
-)
 
 data_inicio = (pib.index.max() - pd.offsets.QuarterEnd(40)).to_pydatetime()
 data_fim = df_graficos.index.max().to_pydatetime()#.strftime('%Y-%m-%d')
@@ -301,8 +261,8 @@ st.plotly_chart(px.line(
                                         y=df_graficos['lower_pib'],
                                         mode='lines',
                                         line=dict(color='lightgray', width=1, dash='dash'),
-                                        fill='tonexty',
-                                        fillcolor='rgba(211, 211, 211, 0.5)',
+                                        # fill='tonexty',
+                                        # fillcolor='rgba(211, 211, 211, 0.4)',
                                         showlegend=False
                                     )
                         .add_scatter(
@@ -311,7 +271,7 @@ st.plotly_chart(px.line(
                                         mode='lines',
                                         line=dict(color='lightgray', width=1, dash='dash'),
                                         fill='tonexty',
-                                        fillcolor='rgba(211, 211, 211, 0.5)',
+                                        # fillcolor='rgba(211, 211, 211, 0.4)',
                                         showlegend=False
                                     )   
 )
