@@ -1,36 +1,3 @@
-import subprocess
-import sys
-import streamlit as st
-
-# Define o pacote e a versão
-pacote = "scipy"
-versao = "<=1.15.0" # Exemplo: uma versão específica
-
-# Comando para instalar o pacote
-comando_instalacao = [sys.executable, "-m", "pip", "install", f"{pacote}{versao}"]
-
-try:
-    # Executa o comando
-    # capture_output=True captura stdout e stderr
-    # text=True decodifica a saída como texto
-    # check=True levanta uma exceção se o comando retornar um código de erro
-    resultado = subprocess.run(comando_instalacao, capture_output=True, text=True, check=True)
-
-    print(f"Instalação do pacote '{pacote}{versao}' concluída com sucesso!")
-    print("Saída do comando:")
-    print(resultado.stdout)
-
-except subprocess.CalledProcessError as e:
-    print(f"Erro ao instalar o pacote '{pacote}{versao}':")
-    print(f"Código de retorno: {e.returncode}")
-    print(f"Saída padrão de erro (stderr): {e.stderr}")
-    print(f"Saída padrão (stdout): {e.stdout}")
-except FileNotFoundError:
-    print("Erro: O comando 'pip' não foi encontrado. Certifique-se de que o Python e o pip estão instalados e no PATH.")
-except Exception as e:
-    print(f"Ocorreu um erro inesperado: {e}")
-
-
 # %% Bibliotecas
 import pandas as pd
 import numpy as np
