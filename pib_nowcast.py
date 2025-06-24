@@ -1,7 +1,8 @@
 # %% Bibliotecas
 import pandas as pd
 import numpy as np
-import numpy as np
+import datetime as dt
+from datetime import timedelta
 
 from bcb import sgs
 import sidrapy as sidra
@@ -16,6 +17,10 @@ import plotly.express as px
 from sktime.utils.plotting import plot_series
 
 import streamlit as st
+
+import warnings
+warnings.filterwarnings("ignore")
+
 # %% Coleta
 # %%% Especificando séries
 
@@ -215,6 +220,8 @@ nowcast = nowcast.assign(
 nowcast = nowcast.resample('QE').last().round(1)
 # nowcast_confint = nowcast_obj.conf_int().loc[:, ['lower pib', 'upper pib']]
 
+df_graficos = pib.merge(nowcast, how='outer', left_index=True, right_index=True).loc[cutoff:]
+
 # %% Criação dash streamlit
 
 st.title('Nowcast do PIB Real')
@@ -241,15 +248,17 @@ st.plotly_chart(px.line(
     y=nowcast['lower_pib'],
     mode='lines',
     line=dict(color='lightgray', width=1, dash='dash'),
-    name='Limite Inferior',
-    fill='tonexty',
-    fillcolor='rgba(211, 211, 211, 0.5)'  # Cor cinza claro com transparência
+    # name='Limite Inferior',
+    # name='',
+    # fill='tonexty',
+    # fillcolor='rgba(211, 211, 211, 0.5)'  # Cor cinza claro com transparência
 ).add_scatter(
     x=nowcast.index,
     y=nowcast['upper_pib'],
     mode='lines',
     line=dict(color='lightgray', width=1, dash='dash'),
-    name='Limite Superior',
+    # name='Limite Superior',
+    name='Intervalo de Confiança',
     fill='tonexty',
     fillcolor='rgba(211, 211, 211, 0.5)'  # Cor cinza claro com transparência
    
@@ -261,6 +270,50 @@ st.plotly_chart(px.line(
     marker=dict(size=5),
     name='PIB YoY%',
 )
+)
+
+data_inicio = (pib.index.max() - pd.offsets.QuarterEnd(40)).to_pydatetime()
+data_fim = df_graficos.index.max().to_pydatetime()#.strftime('%Y-%m-%d')
+intervalo_data = st.sidebar.slider(
+                            "Filtre o período",
+                            min_value=data_inicio,
+                            max_value=data_fim,
+                            value=(data_inicio, data_fim),
+                            # step=timedelta(days=30 )
+                            )
+
+df_graficos = df_graficos.loc[intervalo_data[0]:intervalo_data[1], :]
+
+st.plotly_chart(px.line(
+                            df_graficos,
+                            x=df_graficos.index,
+                            y=['pib', 'pib_nowcast', ],
+                            title='Nowcast do PIB Real',
+                            labels={'value': 'YoY%', 'index':''},
+                            markers=True,
+                            color_discrete_sequence=["#288BC5", 'orange'],
+                                
+                        )
+                        .update_traces(name='PIB Real YoY%', selector=dict(name='pib'))
+                        .update_traces(name='Nowcast PIB YoY%', selector=dict(name='pib_nowcast'))
+                        .add_scatter(
+                                        x=df_graficos.index,
+                                        y=df_graficos['lower_pib'],
+                                        mode='lines',
+                                        line=dict(color='lightgray', width=1, dash='dash'),
+                                        fill='tonexty',
+                                        fillcolor='rgba(211, 211, 211, 0.5)',
+                                        showlegend=False
+                                    )
+                        .add_scatter(
+                                        x=df_graficos.index,
+                                        y=df_graficos['upper_pib'],
+                                        mode='lines',
+                                        line=dict(color='lightgray', width=1, dash='dash'),
+                                        fill='tonexty',
+                                        fillcolor='rgba(211, 211, 211, 0.5)',
+                                        showlegend=False
+                                    )   
 )
 
 st.write('### Resumo do Modelo')
