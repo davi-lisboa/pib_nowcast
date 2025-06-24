@@ -46,7 +46,7 @@ from statsmodels.tsa.statespace.dynamic_factor_mq import DynamicFactorMQ
 import matplotlib.pyplot as plt
 import seaborn as sns
 import plotly.express as px
-from sktime.utils.plotting import plot_series
+# from sktime.utils.plotting import plot_series
 
 import streamlit as st
 
