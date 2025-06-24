@@ -1,3 +1,9 @@
+import streamlit as st
+
+@st.cache_data
+def backport_scipy():
+  !pip install scipy<=1.15.3
+
 # %% Bibliotecas
 import pandas as pd
 import numpy as np
@@ -9,7 +15,6 @@ import sidrapy as sidra
 
 import statsmodels.api as sm
 from statsmodels.tsa.statespace.dynamic_factor_mq import DynamicFactorMQ
-
 
 import matplotlib.pyplot as plt
 import seaborn as sns
