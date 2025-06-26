@@ -164,10 +164,10 @@ fatores = {
         }
 # %% importando .pkl's
 
-with open('initial_model.pkl.gz', 'rb') as file:
+with gzip.open('initial_model.pkl.gz', 'rb') as file:
     initial_model = pickle.load(file)
 
-with open('initial_dataset.pkl,gz', 'rb') as file:
+with gzip.open('initial_dataset.pkl.gz', 'rb') as file:
     initial_dataset = pickle.load(file)
 
 # %%% Coletando séries
