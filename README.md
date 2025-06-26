@@ -29,3 +29,80 @@ Para contornar esse atraso, este projeto utiliza **indicadores antecedentes** �
 
 ## 📦 Estrutura do Repositório
 
+📁 pib_nowcasting/
+├── model_creation.py # Coleta dados, compara versões e reestima o modelo se necessário
+├── dashboard_creation.py # Script do dashboard Streamlit que consome o modelo e o dataset
+├── initial_model.pkl.gz # Modelo estimado salvo (atualizado via GitHub Actions)
+├── initial_dataset.pkl.gz # Dataset base salvo (idem)
+├── requirements.txt # Dependências do projeto
+├── runtime.txt # Versão do Python (para Streamlit Cloud)
+└── .github/
+└── workflows/
+└── run_nowcast.yml # Workflow agendado que atualiza os arquivos automaticamente
+
+---
+
+## 🚀 Automação via GitHub Actions
+
+O repositório conta com um workflow agendado para:
+- Rodar o script `model_creation.py` nos dias úteis (segunda a sexta)
+- Detectar mudanças no dataset ou revisões
+- Atualizar e salvar os arquivos `.pkl.gz` (modelo e dados)
+- Commitar automaticamente os novos arquivos no repositório
+- Garantir que o app Streamlit consuma sempre as versões atualizadas
+
+⏱️ Horários de execução:
+- 09:05, 10:05, 12:30 e 18:30 (horário de Brasília)
+
+---
+
+## 📊 Dashboard Interativo
+
+O dashboard é desenvolvido em **Streamlit** e mostra:
+- PIB observado e nowcastado
+- Intervalos de confiança para o nowcast
+- Resumo técnico do modelo estimado
+
+⚙️ O app pode ser executado localmente com:
+```
+streamlit run dashboard_creation.py
+```
+
+
+Ou diretamente no Streamlit Cloud (em breve).
+
+---
+
+## 📈 Próximos passos
+
+- Testes com diferentes configurações de fatores
+
+- Inclusão de novas variáveis antecedentes
+
+- Publicação de releases dos modelos
+
+- Deploy automatizado do dashboard
+
+- Cálculo e visualização de decomposição das "news"
+
+---
+
+## Tecnologias Utilizadas
+
+* statsmodels
+
+* pandas & numpy
+
+* streamlit
+
+* plotly, matplotlib, seaborn
+
+* bcb & sidrapy (coleta automática de dados)
+
+---
+## 📄 Licença
+Este projeto é distribuído sob a Licença MIT.
+
+---
+## 🙋‍♂️ Autor
+Davi Lisboa • [LinkedIn](https://www.linkedin.com/in/lisboadavi/) • [GitHub](https://github.com/davi-lisboa)
