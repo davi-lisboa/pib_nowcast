@@ -61,7 +61,7 @@ df_graficos = pib.merge(nowcast,
                         how='outer', 
                         left_index=True, 
                         right_index=True).round(1)
-df_graficos
+# df_graficos
 
 # %% Criação dash streamlit
 
