@@ -18,6 +18,7 @@ import plotly.express as px
 # import streamlit as st
 
 import pickle
+import gzip
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -163,10 +164,10 @@ fatores = {
         }
 # %% importando .pkl's
 
-with open('initial_model.pkl', 'rb') as file:
+with open('initial_model.pkl.gz', 'rb') as file:
     initial_model = pickle.load(file)
 
-with open('initial_dataset.pkl', 'rb') as file:
+with open('initial_dataset.pkl,gz', 'rb') as file:
     initial_dataset = pickle.load(file)
 
 # %%% Coletando séries
@@ -220,121 +221,127 @@ if df_completo.equals(initial_dataset):
 
 else:
     print('Dataset atualizado. Salvando novo dataset...')
-    df_completo.to_pickle('initial_dataset.pkl')
-    print('Novo dataset salvo como initial_dataset.pkl')
 
-# %% Criando modelo
+    #  Salvando dataset atualizado
+    with gzip.open("initial_dataset.pkl.gz", "wb") as f:
+        pickle.dump(df_completo, f)
 
+    print('Novo dataset salvo como initial_dataset.pkl.gz')
 
-# Cria o modelo com as especificações
-# Aqui, k_endog_monthly é o número de séries mensais, fatores é o número de fatores, 
-# factor_orders é a ordem dos fatores, e 
-# idiosyncratic_ar1 indica se os termos idiossincráticos seguem um modelo AR(1).  
-dfmq = create_model_quarterly(
-                    endog=mensais.loc[:'2025-04', :],
-                    endog_quarterly= pib,
-                    factors=4,
-                    factor_orders=3,
-                    idiosyncratic_ar1=True
-                    )
+    # %% Criando modelo
 
 
-dfmq.predict()['pib']
-# %%% Atualizando modelo
+    # Cria o modelo com as especificações
+    # Aqui, k_endog_monthly é o número de séries mensais, fatores é o número de fatores, 
+    # factor_orders é a ordem dos fatores, e 
+    # idiosyncratic_ar1 indica se os termos idiossincráticos seguem um modelo AR(1).  
+    # dfmq = create_model_quarterly(
+    #                     endog=mensais.loc[:'2025-04', :],
+    #                     endog_quarterly= pib,
+    #                     factors=4,
+    #                     factor_orders=3,
+    #                     idiosyncratic_ar1=True
+    #                     )
 
-new_obs = df_completo.iloc[-1:, :].copy()
-dist_next_quarter = (new_obs.index[0] + pd.offsets.QuarterEnd(1)).month - new_obs.index[0].month
+    # %%% Atualizando modelo
 
-extra_line = pd.DataFrame(columns=df_completo.columns, 
-                          index=pd.date_range(start=new_obs.index[0], 
-                                              freq='ME', 
-                                              periods=dist_next_quarter+1,  
-                                              inclusive='right')
-                    )
+    new_obs = df_completo.iloc[-1:, :].copy()
+    dist_next_quarter = (new_obs.index[0] + pd.offsets.QuarterEnd(1)).month - new_obs.index[0].month
+
+    extra_line = pd.DataFrame(columns=df_completo.columns, 
+                            index=pd.date_range(start=new_obs.index[0], 
+                                                freq='ME', 
+                                                periods=dist_next_quarter+1,  
+                                                inclusive='right')
+                        )
 
 
-new_obs = pd.concat([new_obs, extra_line], axis=0)
-new_obs.asfreq(None )
-# print(new_obs)
+    new_obs = pd.concat([new_obs, extra_line], axis=0)
 
-new_model = dfmq.append(endog = new_obs.loc[:, mensais.columns.to_list()],
-            endog_quarterly = new_obs.loc[:, ['pib']].resample('Q').last(),
-            )
-print("Modelo atualizado!")
-new_obs.info()
-# new_model.save('updated_model.pkl')
-# dfmq.save('initial_model.pkl')
-# df_completo.to_pickle('initial_dataset.pkl')
+    new_model = initial_model.append(endog = new_obs.loc[:, mensais.columns.to_list()],
+                endog_quarterly = new_obs.loc[:, ['pib']].resample('Q').last(),
+                )
+
+    #  Salvando modelo atualizado
+    with gzip.open("initial_model.pkl.gz", "wb") as f:
+        pickle.dump(new_model, f)
+
+    print("Modelo atualizado!")
+
 # %% News
 
+# if new_obs[['pib']].iloc[-1].isna().values[0]: 
+#     news = dfmq.news(comparison=new_model, 
+#                             impacted_variable='pib', 
+#                             # impact_date = new_obs.index[-1].strftime('%Y-%m'),
+#                             #  comparison_type='updated', 
+#                             start=new_obs.index[-2].strftime('%Y-%m'),
+#                             periods=12
+#                             )
+# else:
+#     news = dfmq.news(comparison=new_model, 
+#                             impacted_variable='pib', 
+#                             impact_date = new_obs.index[-1].strftime('%Y-%m'),
+#                             # comparison_type='updated', 
+#                             # start='2025-05',
+#                             # periods=1
+#                             )
 
-if new_obs[['pib']].iloc[-1].isna().values[0]: 
-    news = dfmq.news(comparison=new_model, 
-                            impacted_variable='pib', 
-                            impact_date = new_obs.index[-1].strftime('%Y-%m'),
-                            #  comparison_type='updated', 
-                            # start='2025-05',
-                            # periods=1
-                            )
+# print(news.summary())
+# # %%
 
-print(news.summary())
-# %%
+# joblib.dump(news.summary(), "news.joblib", compress=True)
 
-news.post_impacted_forecasts[['pib']]
-
-
-new_model.predict(start='2025-05', end='2025-07')[['pib']]
-
-new_model.forecast(3)['pib']
-
-
-
-
-
-
+# news.post_impacted_forecasts[['pib']]
 
 
-TESTES
-# %%
-dfmq.forecast(3)['pib']
-dfmq2.predict(end='2025-07')['pib']
-# %%
+# new_model.predict(start='2025-05', end='2025-09')[['pib']]
 
-news_results.post_impacted_forecasts
-# %%
-pib = pib.asfreq('QE')
-dfmq3 = DynamicFactorMQ(
-                    endog=mensais.loc[cutoff:'2025-04', :],
-                    endog_quarterly=pib.loc[cutoff:'2025-04', :],
-                    factors=4,
-                    factor_orders=3,
-                    idiosyncratic_ar1=True
-                    ).fit()
+# new_model.forecast(3)['pib']
 
-# %%
-new_obs = df_completo.loc['2025-05':, :].copy()
-extra_line = pd.DataFrame(columns=df_completo.columns, 
-                          index=pd.date_range(start=new_obs.index[0], 
-                                              freq='ME', 
-                                              periods=5, inclusive='right'))
-new_obs = pd.concat([new_obs, extra_line], axis=0)
-# print(new_obs)
+# %% Testes
 
-new_model = dfmq.append(endog = new_obs.loc[:, :'ipam'],
-            endog_quarterly = new_obs.loc[:, ['pib']].resample('Q').last(),
-            )
-# %%
-dfmq3.forecast(3)['pib']
-# %%
-new_model.forecast(3)['pib']
-# %%
-new_model.predict(start='2025-05', end='2025-09')['pib']
-# %%
-# new_model.summary()
+# TESTES
+# # %%
+# dfmq.forecast(3)['pib']
+# dfmq2.predict(end='2025-07')['pib']
+# # %%
 
-print(dfmq3.news(comparison=new_model, 
-            impacted_variable='pib',
-            impact_date='2025-06',
-            # comparison_type='updated',
-            ).summary_details())
-# %%
+# news_results.post_impacted_forecasts
+# # %%
+# pib = pib.asfreq('QE')
+# dfmq3 = DynamicFactorMQ(
+#                     endog=mensais.loc[cutoff:'2025-04', :],
+#                     endog_quarterly=pib.loc[cutoff:'2025-04', :],
+#                     factors=4,
+#                     factor_orders=3,
+#                     idiosyncratic_ar1=True
+#                     ).fit()
+
+# # %%
+# new_obs = df_completo.loc['2025-05':, :].copy()
+# extra_line = pd.DataFrame(columns=df_completo.columns, 
+#                           index=pd.date_range(start=new_obs.index[0], 
+#                                               freq='ME', 
+#                                               periods=5, inclusive='right'))
+# new_obs = pd.concat([new_obs, extra_line], axis=0)
+# # print(new_obs)
+
+# new_model = dfmq.append(endog = new_obs.loc[:, :'ipam'],
+#             endog_quarterly = new_obs.loc[:, ['pib']].resample('Q').last(),
+#             )
+# # %%
+# dfmq3.forecast(3)['pib']
+# # %%
+# new_model.forecast(3)['pib']
+# # %%
+# new_model.predict(start='2025-05', end='2025-09')['pib']
+# # %%
+# # new_model.summary()
+
+# print(dfmq3.news(comparison=new_model, 
+#             impacted_variable='pib',
+#             impact_date='2025-06',
+#             # comparison_type='updated',
+#             ).summary_details())
+# # %%
