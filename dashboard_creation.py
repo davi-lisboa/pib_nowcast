@@ -6,6 +6,7 @@ from datetime import timedelta
 
 from bcb import sgs
 import sidrapy as sidra
+from model_creation import get_bacen
 
 # import statsmodels.api as sm
 from statsmodels.tsa.statespace.dynamic_factor_mq import DynamicFactorMQ
@@ -39,6 +40,9 @@ dfmq = load_model()
 
 pib = df_completo[['pib']].resample('QE').last()
 mensais = df_completo.drop(columns=['pib'])
+
+pib_indice = get_bacen({'pib_indice_nsa', 22099}
+                       ).assign(poib_yoy = lambda df: df.pct_change(4))
 
 # %% Nowcasts
 
