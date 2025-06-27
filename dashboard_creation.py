@@ -126,9 +126,9 @@ df_graficos = df_graficos.assign(
                 ).sub(1).multiply(100)
                                     )
     
-).tail(10).round(1)
+).round(1)
 
-df_graficos
+# df_graficos.tail(10)
 
 # %% Criação dash streamlit
 
@@ -137,7 +137,7 @@ st.write('Este aplicativo apresenta o nowcast do PIB Real brasileiro, calculado 
 
 st.sidebar.header('Ajustes do Gráfico')
 
-data_inicio = (pib.index.max() - pd.offsets.QuarterEnd(40)).to_pydatetime()
+data_inicio = (df_graficos.index.max() - pd.offsets.QuarterEnd(40)).to_pydatetime()
 data_fim = df_graficos.index.max().to_pydatetime()#.strftime('%Y-%m-%d')
 intervalo_data = st.sidebar.slider(
                             "Filtre o período",
