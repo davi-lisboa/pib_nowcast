@@ -65,7 +65,7 @@ pib_indice = get_bacen({'pib_indice_nsa': 22099}
                        ).assign(pib_yoy = lambda df: df.pct_change(4).multiply(100),
                                 pib_acum4q = lambda df: df['pib_indice_nsa'].rolling(4).sum().divide(
                                     df['pib_indice_nsa'].shift(4).rolling(4).sum()).sub(1).multiply(100)
-                                ).round(1)
+                                )#.round(1)
 
 # Ajusta datas para último mês do trimestre
 pib_indice.index = pib_indice.index + pd.offsets.QuarterEnd(1)
@@ -85,13 +85,49 @@ nowcast = nowcast.assign(
     upper_pib=nowcast_obj.conf_int().loc[:, 'upper pib']
 )
 nowcast.index = nowcast.index.to_timestamp()
-nowcast = nowcast.resample('QE').last().round(1)
+nowcast = nowcast.resample('QE').last()
 # nowcast_confint = nowcast_obj.conf_int().loc[:, ['lower pib', 'upper pib']]
 
 df_graficos = pib_indice.merge(nowcast, 
                         how='outer', 
                         left_index=True, 
-                        right_index=True).round(1)
+                        right_index=True)
+# df_graficos
+
+# df_graficos['pib_indice_nsa'].applymap(lambda x: x*(1+x['pib_nowcast_yoy'].shift(-4)/100))
+
+pib_indice_nsa_nowcast =  (df_graficos['pib_indice_nsa'] 
+                           * (1 + df_graficos['pib_nowcast_yoy'].shift(-4)/100)
+                           ).shift(4).rename('pib_indice_nsa_nowcast').to_frame()
+# pib_indice_nsa_nowcast
+
+# pib_indice_nsa_nowcast['pib_indice_nsa_nowcast'] =  [observed if observed != np.nan 
+#                         else nowcast
+#                         for observed, nowcast 
+#                         in zip(df_graficos['pib_indice_nsa'].values, 
+#                                pib_indice_nsa_nowcast['pib_indice_nsa_nowcast'].values)]
+
+# pib_indice_nsa_nowcast['pib_indice_nsa_nowcast'] = (pib_indice_nsa_nowcast['pib_indice_nsa_nowcast'] 
+#                                                     if df_graficos['pib_indice_nsa'].isnull()
+#                                                     else df_graficos['pib_indice_nsa']
+# )
+pib_indice_nsa_nowcast.loc[:last_month_available] = df_graficos[['pib_indice_nsa']].loc[:last_month_available].copy()
+
+df_graficos = df_graficos.assign(
+
+    pib_indice_nsa_nowcast = pib_indice_nsa_nowcast[['pib_indice_nsa_nowcast']],
+    # (df_graficos['pib_indice_nsa'] * (1 + df_graficos['pib_nowcast_yoy'].shift(-4)/100)).shift(4),
+    
+    pib_acum4_nowcast = lambda df: (
+        df['pib_indice_nsa_nowcast'].rolling(4).sum()
+        
+        .divide(
+                df['pib_indice_nsa_nowcast'].shift(4).rolling(4).sum()
+                ).sub(1).multiply(100)
+                                    )
+    
+).tail(10).round(1)
+
 df_graficos
 
 # %% Criação dash streamlit
@@ -112,7 +148,7 @@ intervalo_data = st.sidebar.slider(
                             )
 
 df_graficos = df_graficos.loc[intervalo_data[0]:intervalo_data[1], :]
-
+# %% Criação dos Gráficos
 st.plotly_chart(
     
 px.line(
