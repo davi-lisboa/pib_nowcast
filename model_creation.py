@@ -227,6 +227,7 @@ df_completo = mensais.merge(pib, how='left', left_index=True, right_index=True)
 
 # %% Verificando se o dataset é igual ao inicial
 if df_completo.equals(initial_dataset):
+   print('Não houve atualização dos dados')
    pass
 
 else:
