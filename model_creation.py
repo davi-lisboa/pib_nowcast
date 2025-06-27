@@ -170,6 +170,16 @@ with gzip.open('initial_model.pkl.gz', 'rb') as file:
 with gzip.open('initial_dataset.pkl.gz', 'rb') as file:
     initial_dataset = pickle.load(file)
 
+# dfmq = create_model_quarterly(endog = mensais.loc[:'2025-05', :],
+#                               endog_quarterly = pib,
+#                               factors = 4,
+#                               factor_orders = 3,
+#                               idiosyncratic_ar1= True
+                              
+#                               )
+
+# with gzip.open("initial_model.pkl.gz", "wb") as f:
+#     pickle.dump(dfmq, f)
 # %%% Coletando séries
 
 pib = get_bacen({'pib':22099})
@@ -217,6 +227,7 @@ df_completo = mensais.merge(pib, how='left', left_index=True, right_index=True)
 
 # %% Verificando se o dataset é igual ao inicial
 if df_completo.equals(initial_dataset):
+   print('Não houve atualização dos dados')
    pass
 
 else:
@@ -245,22 +256,25 @@ else:
 
     # %%% Atualizando modelo
 
-    new_obs = df_completo.iloc[-1:, :].copy()
-    dist_next_quarter = (new_obs.index[0] + pd.offsets.QuarterEnd(1)).month - new_obs.index[0].month
+    # new_obs = df_completo.iloc[-1:, :].copy()
+    # dist_next_quarter = (new_obs.index[0] + pd.offsets.QuarterEnd(1)).month - new_obs.index[0].month
 
-    extra_line = pd.DataFrame(columns=df_completo.columns, 
-                            index=pd.date_range(start=new_obs.index[0], 
-                                                freq='ME', 
-                                                periods=dist_next_quarter+1,  
-                                                inclusive='right')
-                        )
+    # extra_line = pd.DataFrame(columns=df_completo.columns, 
+    #                         index=pd.date_range(start=new_obs.index[0], 
+    #                                             freq='ME', 
+    #                                             periods=dist_next_quarter+1,  
+    #                                             inclusive='right')
+    #                     )
 
 
-    new_obs = pd.concat([new_obs, extra_line], axis=0)
+    # new_obs = pd.concat([new_obs, extra_line], axis=0)
 
-    new_model = initial_model.append(endog = new_obs.loc[:, mensais.columns.to_list()],
-                endog_quarterly = new_obs.loc[:, ['pib']].resample('Q').last(),
-                )
+    new_model = initial_model.apply(
+        
+                endog = df_completo.loc[:, mensais.columns],
+                # endog_quarterly = new_obs.loc[:, ['pib']].resample('Q').last(),
+                endog_quarterly = pib
+                                    )
 
     #  Salvando modelo atualizado
     with gzip.open("initial_model.pkl.gz", "wb") as f:
