@@ -6,7 +6,7 @@ from datetime import timedelta
 
 from bcb import sgs
 import sidrapy as sidra
-from model_creation import get_bacen
+# from model_creation import get_bacen
 
 # import statsmodels.api as sm
 from statsmodels.tsa.statespace.dynamic_factor_mq import DynamicFactorMQ
@@ -24,6 +24,25 @@ import gzip
 import warnings
 warnings.filterwarnings("ignore")
 # %% Importando dataset e modelo treinado
+
+@st.cache_data
+def get_bacen(series, start=None, end=None, max_tent=10):
+    """
+    Coleta série do SGS
+    """
+    tent = 1
+    while tent <= max_tent:
+        try:
+            print('Tentativa', tent, ':', end='')
+            data = sgs.get(series, start=start, end=end)
+            print('✅')
+            return data
+        except Exception as e:
+            print('❌', e)
+            tent += 1
+            continue
+    raise Exception("Falha ao coletar dados do SGS após várias tentativas.") 
+
 
 @st.cache_data
 def load_dataset():
