@@ -118,7 +118,7 @@ df_graficos = df_graficos.assign(
     pib_indice_nsa_nowcast = pib_indice_nsa_nowcast[['pib_indice_nsa_nowcast']],
     # (df_graficos['pib_indice_nsa'] * (1 + df_graficos['pib_nowcast_yoy'].shift(-4)/100)).shift(4),
     
-    pib_acum4_nowcast = lambda df: (
+    pib_acum4q_nowcast = lambda df: (
         df['pib_indice_nsa_nowcast'].rolling(4).sum()
         
         .divide(
@@ -127,7 +127,7 @@ df_graficos = df_graficos.assign(
                                     )
     
 ).round(1)
-
+df_graficos.loc[:last_month_available, 'pib_nowcast_yoy':] = np.nan
 # df_graficos.tail(10)
 
 # %% Criação dash streamlit
@@ -137,7 +137,8 @@ st.write('Este aplicativo apresenta o nowcast do PIB Real brasileiro, calculado 
 
 st.sidebar.header('Ajustes do Gráfico')
 
-data_inicio = (df_graficos.index.max() - pd.offsets.QuarterEnd(40)).to_pydatetime()
+# Filtro de Data
+data_inicio = (df_graficos.index.max() - pd.offsets.QuarterEnd(60)).to_pydatetime()
 data_fim = df_graficos.index.max().to_pydatetime()#.strftime('%Y-%m-%d')
 intervalo_data = st.sidebar.slider(
                             "Filtre o período",
@@ -148,39 +149,61 @@ intervalo_data = st.sidebar.slider(
                             )
 
 df_graficos = df_graficos.loc[intervalo_data[0]:intervalo_data[1], :]
+
+# Filtro de colunas
+
+indice_escolhido = st.selectbox(label="Tipo de índice", 
+                                options=['PIB YoY%', 'Taxa Acumulada em 4 Trimestres', 'Índice'], )
+
+indice_map = {'PIB YoY%': dict(base='pib_yoy', nowcast='pib_nowcast_yoy', alias_base='PIB YoY%', ),
+               
+              'Taxa Acumulada em 4 Trimestres': dict(base='pib_acum4q', nowcast='pib_acum4q_nowcast', 
+                                                     alias_base='Taxa Acumulada em 4 Trimestres'), 
+
+              'Índice': dict(base='pib_indice_nsa', nowcast='pib_indice_nsa_nowcast', alias_base='Índice')
+              }
+
+indice_base_escolhido = indice_map[indice_escolhido]['base']
+nowcast_escolhido = indice_map[indice_escolhido]['nowcast']
 # %% Criação dos Gráficos
 st.plotly_chart(
     
 px.line(
             df_graficos,
             x=df_graficos.index,
-            y=['pib_yoy', 'pib_nowcast_yoy', ],
+            # y=['pib_yoy', 'pib_nowcast_yoy', ],
+            y = [
+                indice_base_escolhido,
+                nowcast_escolhido
+            ],
             title='Nowcast do PIB Real',
-            labels={'value': 'YoY%', 'index':''},
+            labels={'value': '%' if indice_escolhido != 'Índice' else 'Índice',
+                     'index':''},
             markers=True,
             color_discrete_sequence=["#288BC5", 'orange'],
                 
         ) \
-        .update_traces(name='PIB Real YoY%', selector=dict(name='pib_yoy')) \
-        .update_traces(name='Nowcast PIB YoY%', selector=dict(name='pib_nowcast_yoy')) \
-        .add_scatter(
-                        x=df_graficos.index,
-                        y=df_graficos['lower_pib'],
-                        mode='lines',
-                        line=dict(color='lightgray', width=1, dash='dash'),
-                        # fill='tonexty',
-                        # fillcolor='rgba(211, 211, 211, 0.4)',
-                        showlegend=False
-                    ) \
-        .add_scatter(
-                        x=df_graficos.index,
-                        y=df_graficos['upper_pib'],
-                        mode='lines',
-                        line=dict(color='lightgray', width=1, dash='dash'),
-                        fill='tonexty',
-                        # fillcolor='rgba(211, 211, 211, 0.4)',
-                        showlegend=False
-                    )   
+        .update_traces(name=indice_escolhido, selector=dict(name=indice_base_escolhido)) \
+        
+        .update_traces(name='Nowcast', selector=dict(name=nowcast_escolhido)) \
+        # .add_scatter(
+        #                 x=df_graficos.index,
+        #                 y=df_graficos['lower_pib'],
+        #                 mode='lines',
+        #                 line=dict(color='lightgray', width=1, dash='dash'),
+        #                 # fill='tonexty',
+        #                 # fillcolor='rgba(211, 211, 211, 0.4)',
+        #                 showlegend=False
+        #             ) \
+        # .add_scatter(
+        #                 x=df_graficos.index,
+        #                 y=df_graficos['upper_pib'],
+        #                 mode='lines',
+        #                 line=dict(color='lightgray', width=1, dash='dash'),
+        #                 fill='tonexty',
+        #                 # fillcolor='rgba(211, 211, 211, 0.4)',
+        #                 showlegend=False
+        #             )   
 )
 
 st.write('### Resumo do Modelo')
