@@ -23,7 +23,8 @@ import gzip
 
 import warnings
 warnings.filterwarnings("ignore")
-# %% Importando dataset e modelo treinado
+
+# %% Defnindo Funções
 
 @st.cache_data
 def get_bacen(series, start=None, end=None, max_tent=10):
@@ -43,7 +44,6 @@ def get_bacen(series, start=None, end=None, max_tent=10):
             continue
     raise Exception("Falha ao coletar dados do SGS após várias tentativas.") 
 
-
 @st.cache_data
 def load_dataset():
     with gzip.open("initial_dataset.pkl.gz", "rb") as f:
@@ -53,6 +53,7 @@ def load_dataset():
 def load_model():
     with gzip.open("initial_model.pkl.gz", "rb") as f:
         return pickle.load(f)
+# %% Importando dataset e modelo treinado
 
 df_completo = load_dataset()
 dfmq = load_model()
@@ -61,7 +62,14 @@ pib = df_completo[['pib']].resample('QE').last()
 mensais = df_completo.drop(columns=['pib'])
 
 pib_indice = get_bacen({'pib_indice_nsa': 22099}
-                       ).assign(poib_yoy = lambda df: df.pct_change(4))
+                       ).assign(pib_yoy = lambda df: df.pct_change(4).multiply(100),
+                                pib_acum4q = lambda df: df['pib_indice_nsa'].rolling(4).sum().divide(
+                                    df['pib_indice_nsa'].shift(4).rolling(4).sum()).sub(1).multiply(100)
+                                ).round(1)
+
+# Ajusta datas para último mês do trimestre
+pib_indice.index = pib_indice.index + pd.offsets.QuarterEnd(1)
+pib_indice = pib_indice.asfreq('QE')
 
 # %% Nowcasts
 
@@ -70,7 +78,7 @@ steps = 15 - df_completo.index.max().month
 future_month = last_month_available + pd.offsets.MonthEnd(steps)
 nowcast_obj = dfmq.get_prediction( end=future_month)
 
-nowcast = nowcast_obj.predicted_mean['pib'].rename('pib_nowcast').to_frame()
+nowcast = nowcast_obj.predicted_mean['pib'].rename('pib_nowcast_yoy').to_frame()
 
 nowcast = nowcast.assign(
     lower_pib=nowcast_obj.conf_int().loc[:, 'lower pib'],
@@ -80,11 +88,11 @@ nowcast.index = nowcast.index.to_timestamp()
 nowcast = nowcast.resample('QE').last().round(1)
 # nowcast_confint = nowcast_obj.conf_int().loc[:, ['lower pib', 'upper pib']]
 
-df_graficos = pib.merge(nowcast, 
+df_graficos = pib_indice.merge(nowcast, 
                         how='outer', 
                         left_index=True, 
                         right_index=True).round(1)
-# df_graficos
+df_graficos
 
 # %% Criação dash streamlit
 
@@ -105,36 +113,38 @@ intervalo_data = st.sidebar.slider(
 
 df_graficos = df_graficos.loc[intervalo_data[0]:intervalo_data[1], :]
 
-st.plotly_chart(px.line(
-                            df_graficos,
-                            x=df_graficos.index,
-                            y=['pib', 'pib_nowcast', ],
-                            title='Nowcast do PIB Real',
-                            labels={'value': 'YoY%', 'index':''},
-                            markers=True,
-                            color_discrete_sequence=["#288BC5", 'orange'],
-                                
-                        ) \
-                        .update_traces(name='PIB Real YoY%', selector=dict(name='pib')) \
-                        .update_traces(name='Nowcast PIB YoY%', selector=dict(name='pib_nowcast')) \
-                        .add_scatter(
-                                        x=df_graficos.index,
-                                        y=df_graficos['lower_pib'],
-                                        mode='lines',
-                                        line=dict(color='lightgray', width=1, dash='dash'),
-                                        # fill='tonexty',
-                                        # fillcolor='rgba(211, 211, 211, 0.4)',
-                                        showlegend=False
-                                    ) \
-                        .add_scatter(
-                                        x=df_graficos.index,
-                                        y=df_graficos['upper_pib'],
-                                        mode='lines',
-                                        line=dict(color='lightgray', width=1, dash='dash'),
-                                        fill='tonexty',
-                                        # fillcolor='rgba(211, 211, 211, 0.4)',
-                                        showlegend=False
-                                    )   
+st.plotly_chart(
+    
+px.line(
+            df_graficos,
+            x=df_graficos.index,
+            y=['pib_yoy', 'pib_nowcast_yoy', ],
+            title='Nowcast do PIB Real',
+            labels={'value': 'YoY%', 'index':''},
+            markers=True,
+            color_discrete_sequence=["#288BC5", 'orange'],
+                
+        ) \
+        .update_traces(name='PIB Real YoY%', selector=dict(name='pib_yoy')) \
+        .update_traces(name='Nowcast PIB YoY%', selector=dict(name='pib_nowcast_yoy')) \
+        .add_scatter(
+                        x=df_graficos.index,
+                        y=df_graficos['lower_pib'],
+                        mode='lines',
+                        line=dict(color='lightgray', width=1, dash='dash'),
+                        # fill='tonexty',
+                        # fillcolor='rgba(211, 211, 211, 0.4)',
+                        showlegend=False
+                    ) \
+        .add_scatter(
+                        x=df_graficos.index,
+                        y=df_graficos['upper_pib'],
+                        mode='lines',
+                        line=dict(color='lightgray', width=1, dash='dash'),
+                        fill='tonexty',
+                        # fillcolor='rgba(211, 211, 211, 0.4)',
+                        showlegend=False
+                    )   
 )
 
 st.write('### Resumo do Modelo')
