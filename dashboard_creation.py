@@ -178,7 +178,8 @@ px.line(
             ],
             title='Nowcast do PIB Real',
             labels={'value': '%' if indice_escolhido != 'Índice' else 'Índice',
-                     'index':''},
+                     'index':'',
+                     'variable': ''},
             markers=True,
             color_discrete_sequence=["#288BC5", 'orange'],
                 
@@ -206,6 +207,35 @@ px.line(
         #             )   
 )
 
+justify_html_start = '<div style="text-align: justify">'
+justify_html_end = '<div>'
+st.write('## Coeficiente de Determinação (R²) dos Fatores em Relação ao PIB')
+
+st.write(f'{justify_html_start}O R², também conhecido como coeficiente de determinação, é uma medida estatística que '
+        f'avalia a qualidade do ajuste de um modelo de regressão.{justify_html_end}', unsafe_allow_html=True)
+st.write('')
+st.write(f'{justify_html_start}Ele indica a proporção da variação na variável dependente '
+         f'(PIB em nosso caso) que pode ser prevista a partir das variáveis independentes (fatores latentes).{justify_html_end}',
+          unsafe_allow_html=True)
+
+st.plotly_chart(
+px.bar(
+    dfmq.coefficients_of_determination.loc[['pib']], 
+    labels={'value':'R²', 'index':'', 'variable':'Fatores'},
+    range_y=[0, 1],
+    barmode='relative',
+    facet_col='variable'
+
+        )
+        .update_xaxes(showticklabels=False)
+        .add_annotation(
+                        text="PIB",
+                        xref="paper", yref="paper",
+                        x=0.5, y=-0.15,
+                        showarrow=False,
+                        font=dict(size=14)
+                        )
+)
 st.write('### Resumo do Modelo')
 st.write(dfmq.summary())
 
