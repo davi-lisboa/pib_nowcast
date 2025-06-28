@@ -13,6 +13,7 @@ import sidrapy as sidra
 import matplotlib.pyplot as plt
 import seaborn as sns
 import plotly.express as px
+import plotly.graph_objects as go
 # from sktime.utils.plotting import plot_series
 
 import streamlit as st
@@ -60,11 +61,12 @@ dfmq = load_model()
 pib = df_completo[['pib']].resample('QE').last()
 mensais = df_completo.drop(columns=['pib'])
 
-pib_indice = get_bacen({'pib_indice_nsa': 22099}
+pib_indice = get_bacen({'pib_indice_nsa': 22099},
+                       start='1998-04-01'
                        ).assign(pib_yoy = lambda df: df.pct_change(4).multiply(100),
                                 pib_acum4q = lambda df: df['pib_indice_nsa'].rolling(4).sum().divide(
                                     df['pib_indice_nsa'].shift(4).rolling(4).sum()).sub(1).multiply(100)
-                                )#.round(1)
+                                ).dropna()
 
 # Ajusta datas para último mês do trimestre
 pib_indice.index = pib_indice.index + pd.offsets.QuarterEnd(1)
@@ -74,7 +76,7 @@ pib_indice = pib_indice.asfreq('QE')
 
 last_month_available = df_completo.index.max()
 steps = 15 - df_completo.index.max().month
-future_month = last_month_available + pd.offsets.MonthEnd(steps)
+future_month = dt.date(last_month_available.year + 1, 12, 31)#last_month_available + pd.offsets.MonthEnd(steps)
 nowcast_obj = dfmq.get_prediction( end=future_month)
 
 nowcast = nowcast_obj.predicted_mean['pib'].rename('pib_nowcast_yoy').to_frame()
@@ -112,6 +114,11 @@ pib_indice_nsa_nowcast =  (df_graficos['pib_indice_nsa']
 # )
 pib_indice_nsa_nowcast.loc[:last_month_available] = df_graficos[['pib_indice_nsa']].loc[:last_month_available].copy()
 
+pib_indice_nsa_nowcast =  (pib_indice_nsa_nowcast['pib_indice_nsa_nowcast'] 
+                           * (1 + df_graficos['pib_nowcast_yoy'].shift(-4)/100)
+                           ).shift(4).rename('pib_indice_nsa_nowcast').to_frame()
+
+
 df_graficos = df_graficos.assign(
 
     pib_indice_nsa_nowcast = pib_indice_nsa_nowcast[['pib_indice_nsa_nowcast']],
@@ -137,17 +144,20 @@ st.write('Este aplicativo apresenta o nowcast do PIB Real brasileiro, calculado 
 st.sidebar.header('Ajustes do Gráfico')
 
 # Filtro de Data
-data_inicio = (df_graficos.index.max() - pd.offsets.QuarterEnd(60)).to_pydatetime()
-data_fim = df_graficos.index.max().to_pydatetime()#.strftime('%Y-%m-%d')
-intervalo_data = st.sidebar.slider(
-                            "Filtre o período",
-                            min_value=data_inicio,
-                            max_value=data_fim,
-                            value=(data_inicio, data_fim),
-                            # step=timedelta(days=30 )
-                            )
+# data_inicio = (df_graficos.index.max() - pd.offsets.QuarterEnd(60)).to_pydatetime()
+data_inicio = dt.datetime(df_graficos.index.max().year -15, 3, 31)
+data_fim = df_graficos.index.max().to_pydatetime()
 
-df_graficos = df_graficos.loc[intervalo_data[0]:intervalo_data[1], :]
+# intervalo_data = st.sidebar.slider(
+#                             "Filtre o período",
+#                             min_value=data_inicio,
+#                             max_value=data_fim,
+#                             value=(data_inicio, data_fim),
+#                             # step=timedelta(days=30 )
+#                             )
+
+# df_graficos = df_graficos.loc[intervalo_data[0]:intervalo_data[1], :]
+df_graficos = df_graficos.loc[data_inicio : data_fim, :]
 
 # Filtro de colunas
 
@@ -164,6 +174,7 @@ indice_map = {'PIB YoY%': dict(base='pib_yoy', nowcast='pib_nowcast_yoy', alias_
 
 indice_base_escolhido = indice_map[indice_escolhido]['base']
 nowcast_escolhido = indice_map[indice_escolhido]['nowcast']
+
 # %% Criação dos Gráficos
 st.plotly_chart(
     
@@ -183,9 +194,20 @@ px.line(
             color_discrete_sequence=["#288BC5", 'orange'],
                 
         ) \
+        # Renomeia séries na legenda
         .update_traces(name=indice_escolhido, selector=dict(name=indice_base_escolhido)) \
         
         .update_traces(name='Nowcast', selector=dict(name=nowcast_escolhido)) \
+        
+        # Slider
+        .update_layout(
+        xaxis=dict(
+        rangeslider=dict(
+            visible=True
+        ),
+        type="date"
+    )
+)
         # .add_scatter(
         #                 x=df_graficos.index,
         #                 y=df_graficos['lower_pib'],
@@ -205,9 +227,10 @@ px.line(
         #                 showlegend=False
         #             )   
 )
-
+# %% Gráfico de Barras - Coeficiente de Determinação
 justify_html_start = '<div style="text-align: justify">'
 justify_html_end = '<div>'
+
 st.write('## Coeficiente de Determinação (R²) dos Fatores em Relação ao PIB')
 
 st.write(f'{justify_html_start}O R², também conhecido como coeficiente de determinação, é uma medida estatística que '
@@ -219,7 +242,7 @@ st.write(f'{justify_html_start}Ele indica a proporção da variação na variáv
 
 st.plotly_chart(
 px.bar(
-    dfmq.coefficients_of_determination.loc[['pib']], 
+    dfmq.coefficients_of_determination.loc[['pib']].round(2), 
     labels={'value':'R²', 'index':'', 'variable':'Fatores'},
     range_y=[0, 1],
     barmode='relative',
@@ -235,7 +258,22 @@ px.bar(
                         font=dict(size=14)
                         )
 )
+# %% Tabela-Resumo do Modelo
 st.write('### Resumo do Modelo')
 st.write(dfmq.summary())
 
 # %%
+r2_df  = dfmq.coefficients_of_determination.loc[['pib']].round(4)
+st.plotly_chart(
+go.Figure(
+            go.Waterfall(
+                measure=['relative', 'relative', 'relative', 'relative'],
+                x=[fator for fator in r2_df.columns],
+                y = r2_df.loc['pib'],
+                text = r2_df.loc['pib'],
+                textposition = "outside",
+                
+
+            )
+        )
+)
