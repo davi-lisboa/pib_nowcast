@@ -6,10 +6,9 @@ from datetime import timedelta
 
 from bcb import sgs
 import sidrapy as sidra
-# from model_creation import get_bacen
 
 # import statsmodels.api as sm
-from statsmodels.tsa.statespace.dynamic_factor_mq import DynamicFactorMQ
+# from statsmodels.tsa.statespace.dynamic_factor_mq import DynamicFactorMQ
 
 import matplotlib.pyplot as plt
 import seaborn as sns
