@@ -141,7 +141,7 @@ df_graficos.loc[:last_month_available, 'pib_nowcast_yoy':] = np.nan
 st.title('Nowcast do PIB Real')
 st.write('Este aplicativo apresenta o nowcast do PIB Real brasileiro, calculado com base em um modelo de fatores dinâmicos mensais (DFMQ).')
 
-st.sidebar.header('Ajustes do Gráfico')
+# st.sidebar.header('Ajustes do Gráfico')
 
 # Filtro de Data
 # data_inicio = (df_graficos.index.max() - pd.offsets.QuarterEnd(60)).to_pydatetime()
