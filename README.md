@@ -22,13 +22,13 @@ Para contornar esse atraso, este projeto utiliza **indicadores antecedentes** �
 
 - Utiliza um **Modelo de Fatores Dinâmicos Mensais com estatísticas de estado** (`DynamicFactorMQ` via `statsmodels`)
 - Integra séries mensais e trimestrais via abordagem "Mixed Frequency"
-- Reduz dimensionalidade de 27 variáveis mensais a 4 fatores latentes
+- Reduz dimensionalidade de (atualmente) 27 variáveis mensais a 4 fatores latentes
 - Realiza previsões condicionais para o PIB trimestral
 
 ---
 
 ## 📦 Estrutura do Repositório
-
+```
 📁 pib_nowcasting/
 ├── model_creation.py # Coleta dados, compara versões e reestima o modelo se necessário
 ├── dashboard_creation.py # Script do dashboard Streamlit que consome o modelo e o dataset
@@ -39,7 +39,7 @@ Para contornar esse atraso, este projeto utiliza **indicadores antecedentes** �
 └── .github/
 └── workflows/
 └── run_nowcast.yml # Workflow agendado que atualiza os arquivos automaticamente
-
+```
 ---
 
 ## 🚀 Automação via GitHub Actions
@@ -89,15 +89,15 @@ Ou diretamente no Streamlit Cloud (em breve).
 
 ## Tecnologias Utilizadas
 
-* statsmodels
+* ```statsmodels```
 
-* pandas & numpy
+* ```pandas``` & ```numpy```
 
-* streamlit
+* ```streamlit```
 
-* plotly, matplotlib, seaborn
+* ```plotly```, ```matplotlib```, ```seaborn```
 
-* bcb & sidrapy (coleta automática de dados)
+* ```python-bcb``` & ```sidrapy``` (coleta automática de dados)
 
 ---
 ## 📄 Licença
