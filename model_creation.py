@@ -284,6 +284,41 @@ else:
 
 # %% News
 
+    new_obs = df_completo.iloc[-1:, :].copy()
+
+    if new_obs.index.month % 3 == 0:
+
+        news = initial_model.news(
+                                    comparison=new_model, 
+                                    impacted_variable='pib', 
+                                    impact_date = new_obs.index.strftime('%Y-%m')[0],
+                                    comparison_type='updated', 
+                                )
+
+    else:
+
+        news = initial_model.news(
+                                    comparison=new_model, 
+                                    impacted_variable='pib', 
+                                    impact_date = new_obs.resample('QE').last().index.strftime("%Y-%m")[0],
+                                    comparison_type='updated', 
+                                )
+
+
+    #  Salvando modelo atualizado
+    with gzip.open("news.pkl.gz", "wb") as f:
+        pickle.dump(news.summary(), f)
+
+    print("News Computadas.")
+
+
+
+
+
+
+
+
+
 # if new_obs[['pib']].iloc[-1].isna().values[0]: 
 #     news = dfmq.news(comparison=new_model, 
 #                             impacted_variable='pib', 
