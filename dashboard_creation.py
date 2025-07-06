@@ -258,6 +258,18 @@ px.bar(
                         font=dict(size=14)
                         )
 )
+
+# %% News 
+
+@st.cache_data
+def load_news():
+    with gzip.open("news.pkl.gz", "rb") as f:
+        return pickle.load(f)
+    
+news = load_news()
+st.write('### Impacto dos novos dados')
+st.write(news)
+
 # %% Tabela-Resumo do Modelo
 st.write('### Resumo do Modelo')
 st.write(dfmq.summary())
