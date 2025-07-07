@@ -2,9 +2,9 @@ name: Run PIB Nowcast
 
 on:
   schedule:
-    - cron: '5 12 * * 1-5'   # 09:05 BRT
-    - cron: '5 13 * * 1-5'   # 10:05 BRT
-    - cron: '30 15 * * 1-5'  # 12:30 BRT
+    # - cron: '5 12 * * 1-5'   # 09:05 BRT
+    # - cron: '5 13 * * 1-5'   # 10:05 BRT
+    # - cron: '30 15 * * 1-5'  # 12:30 BRT
     - cron: '30 21 * * 1-5'  # 18:30 BRT
   workflow_dispatch:        # permite rodar manualmente
 
