@@ -74,58 +74,61 @@ pib_indice = pib_indice.asfreq('QE')
 
 # %% Nowcasts
 
-last_month_available = df_completo.index.max()
-steps = 15 - df_completo.index.max().month
-future_month = dt.date(last_month_available.year + 1, 12, 31)#last_month_available + pd.offsets.MonthEnd(steps)
+# Última data com dados
+last_month_available = pib_indice.index.max()
+
+# Estabelece data final de forecast, final do ano seguinte
+future_month = dt.date(last_month_available.year + 1, 12, 31)
+
+# Cria objeto com previsões médias e intervalos de confiança, insample e out-of-sample até @future_month
 nowcast_obj = dfmq.get_prediction( end=future_month)
 
+# Cria dataframe com previsões YoY%
 nowcast = nowcast_obj.predicted_mean['pib'].rename('pib_nowcast_yoy').to_frame()
 
-nowcast = nowcast.assign(
-    lower_pib=nowcast_obj.conf_int().loc[:, 'lower pib'],
-    upper_pib=nowcast_obj.conf_int().loc[:, 'upper pib']
-)
+# Adiciona intervalos de confiança para estimativa YoY%
+# nowcast = nowcast.assign(
+#     lower_pib=nowcast_obj.conf_int().loc[:, 'lower pib'],
+#     upper_pib=nowcast_obj.conf_int().loc[:, 'upper pib']
+# )
+
+# Ajusta datas e dados para trimestrais
 nowcast.index = nowcast.index.to_timestamp()
 nowcast = nowcast.resample('QE').last()
+
 # nowcast_confint = nowcast_obj.conf_int().loc[:, ['lower pib', 'upper pib']]
 
+# Cria um dataframe com dados observados e as previsões YoY%
 df_graficos = pib_indice.merge(nowcast, 
                         how='outer', 
                         left_index=True, 
                         right_index=True)
-# df_graficos
 
-# df_graficos['pib_indice_nsa'].applymap(lambda x: x*(1+x['pib_nowcast_yoy'].shift(-4)/100))
+# Lógica para estender o índice até @future_month aplicando as taxas YoY%
 
-pib_indice_nsa_nowcast =  (df_graficos['pib_indice_nsa'] 
-                           * (1 + df_graficos['pib_nowcast_yoy'].shift(-4)/100)
-                           ).shift(4).rename('pib_indice_nsa_nowcast').to_frame()
-# pib_indice_nsa_nowcast
 
-# pib_indice_nsa_nowcast['pib_indice_nsa_nowcast'] =  [observed if observed != np.nan 
-#                         else nowcast
-#                         for observed, nowcast 
-#                         in zip(df_graficos['pib_indice_nsa'].values, 
-#                                pib_indice_nsa_nowcast['pib_indice_nsa_nowcast'].values)]
+pib_indice_nsa_nowcast =  (df_graficos['pib_indice_nsa'] # Índice do PIB
+                           * (1 + df_graficos['pib_nowcast_yoy'].shift(-4)/100) # Taxa de YoY% 4 trimestres a frente
+                           ).shift(4).rename('pib_indice_nsa_nowcast').to_frame() # Joga resultado 4 linhas para baixo
 
-# pib_indice_nsa_nowcast['pib_indice_nsa_nowcast'] = (pib_indice_nsa_nowcast['pib_indice_nsa_nowcast'] 
-#                                                     if df_graficos['pib_indice_nsa'].isnull()
-#                                                     else df_graficos['pib_indice_nsa']
-# )
+# O processo acima gera NaN já que os índices observados são limitados
+# Todos os índices calculados para períodos onde existe dado real são substituídos por eles 
+
 pib_indice_nsa_nowcast.loc[:last_month_available] = df_graficos[['pib_indice_nsa']].loc[:last_month_available].copy()
 
-pib_indice_nsa_nowcast =  (pib_indice_nsa_nowcast['pib_indice_nsa_nowcast'] 
-                           * (1 + df_graficos['pib_nowcast_yoy'].shift(-4)/100)
-                           ).shift(4).rename('pib_indice_nsa_nowcast').to_frame()
+# O processo é feito novamente e agora se estende até o último período futuro
+pib_indice_nsa_nowcast =  (pib_indice_nsa_nowcast['pib_indice_nsa_nowcast'] # Índice do PIB 
+                           * (1 + df_graficos['pib_nowcast_yoy'].shift(-4)/100) # Taxa de YoY% 4 trimestres a frente
+                           ).shift(4).rename('pib_indice_nsa_nowcast').to_frame() # Joga resultado 4 linhas para baixo
 
 
 df_graficos = df_graficos.assign(
-
+    # Adiciona índices futuros ao df
     pib_indice_nsa_nowcast = pib_indice_nsa_nowcast[['pib_indice_nsa_nowcast']],
-    # (df_graficos['pib_indice_nsa'] * (1 + df_graficos['pib_nowcast_yoy'].shift(-4)/100)).shift(4),
     
+    # Com os índices futuros disponíveis, agora é possível calcular a taxa acumulada em 4 trimestres
     pib_acum4q_nowcast = lambda df: (
-        df['pib_indice_nsa_nowcast'].rolling(4).sum()
+        df['pib_indice_nsa_nowcast'].rolling(4).sum() 
         
         .divide(
                 df['pib_indice_nsa_nowcast'].shift(4).rolling(4).sum()
@@ -133,8 +136,9 @@ df_graficos = df_graficos.assign(
                                     )
     
 ).round(1)
+
+# Previsões e cálculos insample são substituídos por NaN
 df_graficos.loc[:last_month_available, 'pib_nowcast_yoy':] = np.nan
-# df_graficos.tail(10)
 
 # %% Criação dash streamlit
 
