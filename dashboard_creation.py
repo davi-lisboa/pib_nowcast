@@ -81,7 +81,7 @@ last_month_available = pib_indice.index.max()
 future_month = dt.date(last_month_available.year + 1, 12, 31)
 
 # Cria objeto com previsões médias e intervalos de confiança, insample e out-of-sample até @future_month
-nowcast_obj = dfmq.get_prediction( end=future_month)
+nowcast_obj = dfmq.get_prediction( end=future_month, information_set='smoothed')
 
 # Cria dataframe com previsões YoY%
 nowcast = nowcast_obj.predicted_mean['pib'].rename('pib_nowcast_yoy').to_frame()
