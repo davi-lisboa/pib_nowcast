@@ -283,26 +283,34 @@ else:
     print("Modelo atualizado!")
 
 # %% News
+    last_pib = pib.iloc[-1, :].to_frame()
+    # new_obs = df_completo.iloc[-1:, :].copy()
 
-    new_obs = df_completo.iloc[-1:, :].copy()
+    # if new_obs.index.month % 3 == 0:
 
-    if new_obs.index.month % 3 == 0:
+    #     news = initial_model.news(
+    #                                 comparison=new_model, 
+    #                                 impacted_variable='pib', 
+    #                                 impact_date = new_obs.index.strftime('%Y-%m')[0],
+    #                                 comparison_type='updated', 
+    #                             )
 
-        news = initial_model.news(
-                                    comparison=new_model, 
-                                    impacted_variable='pib', 
-                                    impact_date = new_obs.index.strftime('%Y-%m')[0],
-                                    comparison_type='updated', 
-                                )
+    # else:
 
-    else:
+    #     news = initial_model.news(
+    #                                 comparison=new_model, 
+    #                                 impacted_variable='pib', 
+    #                                 impact_date = new_obs.resample('QE').last().index.strftime("%Y-%m")[0],
+    #                                 comparison_type='updated', 
+    #                             )
 
-        news = initial_model.news(
-                                    comparison=new_model, 
-                                    impacted_variable='pib', 
-                                    impact_date = new_obs.resample('QE').last().index.strftime("%Y-%m")[0],
-                                    comparison_type='updated', 
-                                )
+    # Sempre o trimestre seguinte à última divulgação
+    news = initial_model.news(
+                                comparison=new_model, 
+                                impacted_variable='pib', 
+                                impact_date = (last_pib.index + pd.offsets.QuarterEnd(1))[0].strftime("%Y-%m"),
+                                # comparison_type='updated', 
+                            )
 
 
     #  Salvando modelo atualizado
