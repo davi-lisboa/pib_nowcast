@@ -139,6 +139,28 @@ df_graficos = df_graficos.assign(
 
 # Previsões e cálculos insample são substituídos por NaN
 df_graficos.loc[:last_month_available, 'pib_nowcast_yoy':] = np.nan
+# %% Histórico de nowcasts
+with gzip.open('nowcasts_historico.pkl.gz', 'rb') as file:
+    nowcasts_historico = pickle.load(file)
+
+most_recent_nowcasts = df_graficos \
+                        .dropna(subset=['pib_nowcast_yoy']) \
+                            .dropna(axis=1) \
+                                .iloc[0, :] \
+                                    .to_dict()
+
+for i, v in most_recent_nowcasts.items():
+    nowcasts_historico[i].append(v)
+
+nowcasts_historico['Date'].append(dt.date.today().strftime("%Y-%m-%d"))
+
+with gzip.open("nowcasts_historico.pkl.gz", "wb") as file:
+    pickle.dump(nowcasts_historico, file)
+
+hist_nowcast = pd.DataFrame(nowcasts_historico).set_index('Date')
+
+# if hist_nowcast.shape[0] >= 5:
+#     st.line_chart(data=hist_nowcast.tail(5), )
 
 # %% Criação dash streamlit
 
