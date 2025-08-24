@@ -284,6 +284,8 @@ else:
 
 # %% News
     last_pib = pib.iloc[-1, :].to_frame()
+    last_pub_pib = pib.index[-1]
+    last_initial_pib = initial_dataset[['pib']].dropna().index[-1]
     # new_obs = df_completo.iloc[-1:, :].copy()
 
     # if new_obs.index.month % 3 == 0:
@@ -303,15 +305,27 @@ else:
     #                                 impact_date = new_obs.resample('QE').last().index.strftime("%Y-%m")[0],
     #                                 comparison_type='updated', 
     #                             )
+    # Se a última publicação for igual ao último dado na base inicial
+    if last_pub_pib == last_initial_pib:
 
-    # Sempre o trimestre seguinte à última divulgação
-    news = initial_model.news(
-                                comparison=new_model, 
-                                impacted_variable='pib', 
-                                impact_date = (last_pib.index + pd.offsets.QuarterEnd(1))[0].strftime("%Y-%m"),
-                                # comparison_type='updated', 
-                            )
-
+        # A comparação é feita com o trimestre seguinte à última divulgação
+        news = initial_model.news(
+                                    comparison=new_model, 
+                                    impacted_variable='pib', 
+                                    impact_date = (last_initial_pib + pd.offsets.QuarterEnd(1)).strftime("%Y-%m"),
+                                    comparison_type='updated', 
+                                )
+        
+    # Se a última publicação for posterior ao último dado da base inicial
+    elif last_pub_pib > last_initial_pib:
+        
+        # A comparação é feita com o próprio trimestre
+        news = initial_model.news(
+                                    comparison=new_model, 
+                                    impacted_variable='pib', 
+                                    impact_date = last_pub_pib.strftime("%Y-%m"),
+                                    comparison_type='updated', 
+                                )
 
     #  Salvando modelo atualizado
     with gzip.open("news.pkl.gz", "wb") as f:
