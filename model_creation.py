@@ -256,23 +256,9 @@ else:
 
     # %%% Atualizando modelo
 
-    # new_obs = df_completo.iloc[-1:, :].copy()
-    # dist_next_quarter = (new_obs.index[0] + pd.offsets.QuarterEnd(1)).month - new_obs.index[0].month
-
-    # extra_line = pd.DataFrame(columns=df_completo.columns, 
-    #                         index=pd.date_range(start=new_obs.index[0], 
-    #                                             freq='ME', 
-    #                                             periods=dist_next_quarter+1,  
-    #                                             inclusive='right')
-    #                     )
-
-
-    # new_obs = pd.concat([new_obs, extra_line], axis=0)
-
     new_model = initial_model.apply(
         
                 endog = df_completo.loc[:, mensais.columns],
-                # endog_quarterly = new_obs.loc[:, ['pib']].resample('Q').last(),
                 endog_quarterly = pib
                                     )
 
@@ -282,32 +268,15 @@ else:
 
     print("Modelo atualizado!")
 
-# %% News
-    last_pib = pib.iloc[-1, :].to_frame()
+    # %% News
+
+    # last_pib = pib.iloc[-1, :].to_frame()
     last_pub_pib = pib.index[-1]
     last_initial_pib = initial_dataset[['pib']].dropna().index[-1]
-    # new_obs = df_completo.iloc[-1:, :].copy()
 
-    # if new_obs.index.month % 3 == 0:
-
-    #     news = initial_model.news(
-    #                                 comparison=new_model, 
-    #                                 impacted_variable='pib', 
-    #                                 impact_date = new_obs.index.strftime('%Y-%m')[0],
-    #                                 comparison_type='updated', 
-    #                             )
-
-    # else:
-
-    #     news = initial_model.news(
-    #                                 comparison=new_model, 
-    #                                 impacted_variable='pib', 
-    #                                 impact_date = new_obs.resample('QE').last().index.strftime("%Y-%m")[0],
-    #                                 comparison_type='updated', 
-    #                             )
     # Se a última publicação for igual ao último dado na base inicial
     if last_pub_pib == last_initial_pib:
-
+        print('last_pub_pib == last_initial_pib', last_pub_pib == last_initial_pib)
         # A comparação é feita com o trimestre seguinte à última divulgação
         news = initial_model.news(
                                     comparison=new_model, 
@@ -318,7 +287,7 @@ else:
         
     # Se a última publicação for posterior ao último dado da base inicial
     elif last_pub_pib > last_initial_pib:
-        
+        print('last_pub_pib > last_initial_pib', last_pub_pib > last_initial_pib)
         # A comparação é feita com o próprio trimestre
         news = initial_model.news(
                                     comparison=new_model, 
@@ -332,87 +301,3 @@ else:
         pickle.dump(news.summary(), f)
 
     print("News Computadas.")
-
-
-
-
-
-
-
-
-
-# if new_obs[['pib']].iloc[-1].isna().values[0]: 
-#     news = dfmq.news(comparison=new_model, 
-#                             impacted_variable='pib', 
-#                             # impact_date = new_obs.index[-1].strftime('%Y-%m'),
-#                             #  comparison_type='updated', 
-#                             start=new_obs.index[-2].strftime('%Y-%m'),
-#                             periods=12
-#                             )
-# else:
-#     news = dfmq.news(comparison=new_model, 
-#                             impacted_variable='pib', 
-#                             impact_date = new_obs.index[-1].strftime('%Y-%m'),
-#                             # comparison_type='updated', 
-#                             # start='2025-05',
-#                             # periods=1
-#                             )
-
-# print(news.summary())
-# # %%
-
-# joblib.dump(news.summary(), "news.joblib", compress=True)
-
-# news.post_impacted_forecasts[['pib']]
-
-
-# new_model.predict(start='2025-05', end='2025-09')[['pib']]
-
-# new_model.forecast(3)['pib']
-
-# %% Testes
-
-# TESTES
-# # %%
-# dfmq.forecast(3)['pib']
-# dfmq2.predict(end='2025-07')['pib']
-# # %%
-
-# news_results.post_impacted_forecasts
-# # %%
-# pib = pib.asfreq('QE')
-# dfmq3 = DynamicFactorMQ(
-#                     endog=mensais.loc[cutoff:'2025-04', :],
-#                     endog_quarterly=pib.loc[cutoff:'2025-04', :],
-#                     factors=4,
-#                     factor_orders=3,
-#                     idiosyncratic_ar1=True
-#                     ).fit()
-
-# # %%
-# new_obs = df_completo.loc['2025-05':, :].copy()
-# extra_line = pd.DataFrame(columns=df_completo.columns, 
-#                           index=pd.date_range(start=new_obs.index[0], 
-#                                               freq='ME', 
-#                                               periods=5, inclusive='right'))
-# new_obs = pd.concat([new_obs, extra_line], axis=0)
-# # print(new_obs)
-
-# new_model = dfmq.append(endog = new_obs.loc[:, :'ipam'],
-#             endog_quarterly = new_obs.loc[:, ['pib']].resample('Q').last(),
-#             )
-# # %%
-# dfmq3.forecast(3)['pib']
-# # %%
-# new_model.forecast(3)['pib']
-# # %%
-# new_model.predict(start='2025-05', end='2025-09')['pib']
-# # %%
-# # new_model.summary()
-
-# print(dfmq3.news(comparison=new_model, 
-#             impacted_variable='pib',
-#             impact_date='2025-06',
-#             # comparison_type='updated',
-#             ).summary_details())
-# # %%
