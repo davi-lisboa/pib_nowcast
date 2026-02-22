@@ -52,7 +52,7 @@ O repositório conta com um workflow agendado para:
 - Garantir que o app Streamlit consuma sempre as versões atualizadas
 
 ⏱️ Horários de execução:
-- 09:05, 10:05, 12:30 e 18:30 (horário de Brasília)
+- Segunda a sexta às 18:30 (horário de Brasília)
 
 ---
 
@@ -69,7 +69,7 @@ streamlit run dashboard_creation.py
 ```
 
 
-Ou diretamente no Streamlit Cloud (em breve).
+Ou diretamente no Streamlit Cloud em [PIB Nowcast](https://pib-nowcast.streamlit.app/).
 
 ---
 
@@ -78,12 +78,6 @@ Ou diretamente no Streamlit Cloud (em breve).
 - Testes com diferentes configurações de fatores
 
 - Inclusão de novas variáveis antecedentes
-
-- Publicação de releases dos modelos
-
-- Deploy automatizado do dashboard
-
-- Cálculo e visualização de decomposição das "news"
 
 ---
 

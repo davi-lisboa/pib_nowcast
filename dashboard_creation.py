@@ -301,17 +301,17 @@ st.write('### Resumo do Modelo')
 st.write(dfmq.summary())
 
 # %%
-r2_df  = dfmq.coefficients_of_determination.loc[['pib']].round(4)
-st.plotly_chart(
-go.Figure(
-            go.Waterfall(
-                measure=['relative', 'relative', 'relative', 'relative'],
-                x=[fator for fator in r2_df.columns],
-                y = r2_df.loc['pib'],
-                text = r2_df.loc['pib'],
-                textposition = "outside",
+# r2_df  = dfmq.coefficients_of_determination.loc[['pib']].round(4)
+# st.plotly_chart(
+# go.Figure(
+#             go.Waterfall(
+#                 measure=['relative', 'relative', 'relative', 'relative'],
+#                 x=[fator for fator in r2_df.columns],
+#                 y = r2_df.loc['pib'],
+#                 text = r2_df.loc['pib'],
+#                 textposition = "outside",
                 
 
-            )
-        )
-)
+#             )
+#         )
+# )
