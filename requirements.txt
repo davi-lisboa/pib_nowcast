@@ -9,4 +9,4 @@ sidrapy
 statsmodels<=0.14.0
 streamlit
 wheel==0.45.1
-
+pandas<=3.0
