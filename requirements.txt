@@ -6,7 +6,7 @@ python-bcb
 scipy<=1.15.0
 seaborn
 sidrapy
-statsmodels<=0.14.0
+statsmodels
 streamlit
 wheel==0.45.1
 pandas<=3.0
